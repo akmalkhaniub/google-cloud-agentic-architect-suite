@@ -18,6 +18,14 @@
    - Transient cloud errors (`HTTP 429 Quota Exceeded`, `HTTP 503 Service Unavailable`) **MUST** execute exponential backoff retry policies. Unrecoverable failures exceeding 3 retry cycles **MUST** be dead-lettered to an isolated Cloud Pub/Sub Dead-Letter Queue (`$DeadLetterQueue`) for human review and replay.
 8. **INV-08 (OpenTelemetry to Cloud Trace Observability)**:
    - Every graph execution, supervisor-to-worker handoff, and tool execution **MUST** emit structured OpenTelemetry GenAI (`gen_ai.*`) spans with department cost-center attribution, queryable via Google Cloud Trace and Cloud Logging.
+9. **INV-09 (Multi-Tier Agent Memory & Memorystore Vector Isolation)**:
+   - Agent memory **MUST** adhere to strict tiering (ephemeral working session buffer, persistent episodic storage in Cloud Memorystore Redis Vector Search partitioned by `tenant_id`, and distilled governance rules) with cosine recall threshold $\ge 0.82$.
+10. **INV-10 (BigQuery Continuous Evaluation & Pointwise LLM-as-a-Judge)**:
+    - All production workflow traces **MUST** continuously stream into BigQuery dataset `vertex_ai_evaluations` and pass Pointwise LLM-as-a-Judge thresholds (Faithfulness $\ge 0.90$, Answer Relevance $\ge 0.90$, Zero Safety Harm).
+11. **INV-11 (FastMCP Protocol Standard & Tiered Authorization)**:
+    - Model Context Protocol integration **MUST** conform to the standard JSON-RPC 2.0 interface (`ping`, `tools/list`, `resources/list`, `tools/call`) with strict 3-tier authorization (`READ_ONLY`, `DRAFT_MUTATION`, `LIVE_SPEND` requiring valid Workload Identity OIDC tokens).
+12. **INV-12 (Eventarc A2A Dispatch & Resilient Circuit Breaker)**:
+    - Inter-agent communication **MUST** route through Google Agent-to-Agent (A2A) protocol wire envelopes and enforce a tri-state circuit breaker (`CLOSED` / `HALF_OPEN` / `OPEN`) with automated graceful degradation from Gemini 1.5 Pro to Gemini 1.5 Flash upon repeated upstream failures.
 
 ---
 
@@ -33,7 +41,11 @@
 | **`REQ-GCP-HITL-01`** | Pillar 3: Human-in-the-Loop Gating | Graph checkpointing, pause/resume state machine for high-spend actions ($> \$5,000$), cryptographic approval signature verification, and Cloud Audit Logging. | **Core:** Human-in-the-Loop & Auditability |
 | **`REQ-GCP-RES-01`** | Pillar 4: Pub/Sub DLQ & Eventarc | Asynchronous Cloud Pub/Sub integration, Eventarc triggers, exponential backoff for transient 429/503 errors, and automatic Dead-Letter Queue routing. | **Core:** Distributed Resiliency & Eventarc |
 | **`REQ-GCP-OBS-01`** | Pillar 4: Cloud Trace & FinOps | Distributed OpenTelemetry `gen_ai.*` tracing to Google Cloud Trace, Cloud Monitoring metrics, department cost center attribution, and quota tracking. | **Core:** Full-Stack Observability & FinOps |
-| **`REQ-GCP-EVAL-01`** | Cross-Cutting: 4-Gate Evals | Automated 4-Gate Evaluation Suite (Deterministic Math/DLP, Multi-Agent Trajectory/DLQ, Model Armor/VPC-SC, Cloud Trace FinOps Scorecard). | **All:** Enterprise Production Readiness |
+| **`REQ-GCP-MEM-01`** | Pillar 5: Multi-Tier Agent Memory | Cloud Memorystore Redis Vector Search episodic store, cosine similarity thresholding ($\ge 0.82$), tenant isolation, and automated governance rule distillation. | **Advanced:** Agent Memory, State & Context Management |
+| **`REQ-GCP-BIGQUERY-EVAL-01`** | Pillar 6: BigQuery Continuous Eval | Pointwise LLM-as-a-Judge evaluation streaming traces to BigQuery with SQL analytics (P95 latency, drift index, and departmental spend). | **Advanced:** MLOps, Model Monitoring & BigQuery Analytics |
+| **`REQ-GCP-MCP-01`** | Pillar 7: FastMCP Google Cloud Server | FastMCP JSON-RPC 2.0 server exposing GCP agent tools & resources to external AI coding agents with `LIVE_SPEND` authorization gating. | **Advanced:** Open Protocol Interoperability & MCP Standard |
+| **`REQ-GCP-A2A-01`** | Pillar 8: Eventarc A2A & Circuit Breaker | Agent-to-Agent wire protocol dispatcher with self-healing tri-state circuit breaker and automated model cascade degradation (Pro to Flash). | **Advanced:** Multi-Agent Swarms & Resilient Architecture |
+| **`REQ-GCP-EVAL-01`** | Cross-Cutting: 8-Gate Evals | Comprehensive 8-Gate Automated Verification Suite covering all 8 pillars with 100% compliance verification. | **All:** Enterprise Production Readiness |
 
 ---
 
@@ -49,4 +61,8 @@
 | `REQ-GCP-HITL-01` | `src/pillars/p3_dlp_governance_rag.py` | `tests/test_suite.py::test_req_gcp_hitl_01_adaptive_approval_checkpoint` |
 | `REQ-GCP-RES-01` | `src/pillars/p4_resiliency_observability.py` | `tests/test_suite.py::test_req_gcp_res_01_pubsub_retry_and_dlq` |
 | `REQ-GCP-OBS-01` | `src/pillars/p4_resiliency_observability.py` | `tests/test_suite.py::test_req_gcp_obs_01_cloud_trace_and_finops` |
-| `REQ-GCP-EVAL-01` | `src/evals/runner.py` | `tests/test_suite.py::test_req_gcp_eval_01_four_gate_evaluation_suite` |
+| `REQ-GCP-MEM-01` | `src/pillars/p5_agent_memory_store.py` | `tests/test_suite.py::test_req_gcp_mem_01_working_memory_and_history`<br/>`tests/test_suite.py::test_req_gcp_mem_02_episodic_recall_cosine_threshold`<br/>`tests/test_suite.py::test_req_gcp_mem_03_governance_rule_distillation` |
+| `REQ-GCP-BIGQUERY-EVAL-01` | `src/pillars/p6_bigquery_eval_studio.py` | `tests/test_suite.py::test_req_gcp_bq_01_continuous_evaluation_metrics`<br/>`tests/test_suite.py::test_req_gcp_bq_02_analytics_sql_queries` |
+| `REQ-GCP-MCP-01` | `src/pillars/p7_mcp_google_server.py` | `tests/test_suite.py::test_req_gcp_mcp_01_tools_and_resources_list`<br/>`tests/test_suite.py::test_req_gcp_mcp_02_live_spend_authorization_gate` |
+| `REQ-GCP-A2A-01` | `src/pillars/p8_a2a_resilient_circuit_breaker.py` | `tests/test_suite.py::test_req_gcp_a2a_01_normal_message_dispatch`<br/>`tests/test_suite.py::test_req_gcp_a2a_02_circuit_breaker_fault_trip_and_degradation` |
+| `REQ-GCP-EVAL-01` | `src/evals/runner.py` | `tests/test_suite.py::test_req_gcp_eval_01_four_gate_evaluation_suite`<br/>`tests/test_suite.py::test_req_gcp_eval_02_eight_gate_evaluation_suite` |

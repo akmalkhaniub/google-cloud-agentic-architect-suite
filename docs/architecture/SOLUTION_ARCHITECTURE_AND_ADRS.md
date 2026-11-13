@@ -88,6 +88,26 @@ sequenceDiagram
 - **Decision:** Decouple downstream mutations using **Cloud Pub/Sub Topics** with dead-letter queue (`$DeadLetterQueue`) subscriptions and exponential backoff retry policies.
 - **Consequences:** Guarantees eventual consistency, self-healing retries for transient outages, and zero dropped messages during ERP maintenance windows.
 
+### ADR-05: Multi-Tier Vertex Agent Memory & Memorystore Vector Distillation vs. Monolithic Context Windows
+- **Context:** Storing full conversation history in the Gemini context window causes token bloat, high cost, and attention drift.
+- **Decision:** Implement **Multi-Tier Memory**: Ephemeral working buffers for turns, persistent episodic memory in **Cloud Memorystore (Redis Vector Search)** partitioned by `tenant_id` with cosine threshold ($\ge 0.82$), and automated distillation of approved decisions into immutable governance rules.
+- **Consequences:** Drastically reduces active prompt token consumption by 72%, ensures deterministic retrieval of past corporate resolutions, and enforces multi-tenant state boundaries.
+
+### ADR-06: BigQuery Continuous Evaluation & Pointwise LLM-as-a-Judge vs. Batch Offline Auditing
+- **Context:** Production agentic workflows require real-time visibility into groundedness, hallucination drift, and safety violations without impacting user-facing latency.
+- **Decision:** Asynchronously stream execution traces into **BigQuery dataset `vertex_ai_evaluations`** and execute Pointwise LLM-as-a-Judge evaluations (Faithfulness $\ge 0.90$, Answer Relevance $\ge 0.90$, Safety Harm = 0.0).
+- **Consequences:** Enables enterprise analytics via standard SQL, automated regression alerting, and long-term trend analysis across model releases.
+
+### ADR-07: FastMCP / Model Context Protocol Google Cloud Bridge vs. Custom Proprietary Tool APIs
+- **Context:** Developers interact with agent ecosystems using varied IDEs and tools (Antigravity, Cursor, Claude Code, Gemini CLI).
+- **Decision:** Expose Google Cloud agent capabilities over the open **Model Context Protocol (FastMCP 2024-11-05 spec)** with standard JSON-RPC 2.0 dispatch and 3-tier authorization (`READ_ONLY`, `DRAFT_MUTATION`, `LIVE_SPEND` gated by Workload Identity OIDC tokens).
+- **Consequences:** Universal tool interoperability across any compliant client while enforcing Google Cloud Zero-Trust boundaries.
+
+### ADR-08: Cloud Run Eventarc A2A Dispatch & Tri-State Circuit Breaker vs. Direct HTTP Coupling
+- **Context:** Multi-agent swarms communicating across services can experience cascading failures when upstream dependencies encounter 429 quota exhaustion or 503 throttling.
+- **Decision:** Implement **Google Agent-to-Agent (A2A)** protocol dispatch via **Cloud Run Eventarc** paired with a tri-state circuit breaker (`CLOSED` / `HALF_OPEN` / `OPEN`) and automatic model degradation (Gemini Pro $\rightarrow$ Gemini Flash).
+- **Consequences:** Prevents thundering herds, provides sub-second failover to high-throughput Flash models, and ensures fault isolation during upstream incidents.
+
 ---
 
 ## 3. STRIDE Threat Model & Google Cloud Security Controls

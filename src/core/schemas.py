@@ -268,3 +268,163 @@ class FourGateEvalReport(BaseModel):
     all_gates_passed: bool
     gates: dict[str, Any]
     generated_at: str = Field(default_factory=utc_now_iso)
+
+
+# ============================================================================
+# 7. Multi-Tier Agent Memory & Memorystore Vector Distillation (INV-09, REQ-GCP-MEM-01)
+# ============================================================================
+
+class MemoryType(str, Enum):
+    """Memory retention tier in Vertex AI agentic architectures."""
+    WORKING = "WORKING"
+    EPISODIC = "EPISODIC"
+    DISTILLED_RULE = "DISTILLED_RULE"
+
+
+class EpisodicMemoryRecord(BaseModel):
+    """Persistent episodic memory record indexed in Cloud Memorystore / Vertex Feature Store."""
+    memory_id: str
+    tenant_id: str
+    user_id: str
+    prompt: str
+    outcome: str
+    action_summary: str
+    feedback_sentiment: Literal["POSITIVE", "NEGATIVE", "NEUTRAL"] = "POSITIVE"
+    embedding: list[float] = Field(default_factory=list)
+    created_at: str = Field(default_factory=utc_now_iso)
+
+
+class DistilledGovernanceRule(BaseModel):
+    """Deterministic governance constraint extracted from human feedback cycles."""
+    rule_id: str
+    tenant_id: str
+    category: str
+    rule_text: str
+    source_workflow_id: str
+    created_at: str = Field(default_factory=utc_now_iso)
+
+
+class MemoryRecallResult(BaseModel):
+    """Consolidated memory recall payload with semantic similarity scores."""
+    query: str
+    recalled_memories: list[EpisodicMemoryRecord] = Field(default_factory=list)
+    distilled_rules: list[DistilledGovernanceRule] = Field(default_factory=list)
+    top_similarity_score: float = 0.0
+
+
+# ============================================================================
+# 8. BigQuery Continuous Evaluation & Vertex AI GenAI Studio (INV-10, REQ-GCP-BIGQUERY-EVAL-01)
+# ============================================================================
+
+class JudgeMetricResult(BaseModel):
+    """Single LLM-as-a-Judge evaluation metric score."""
+    metric_name: Literal["faithfulness", "answer_relevance", "safety_harm", "latency_efficiency"]
+    score: float = Field(..., ge=0.0, le=1.0)
+    reasoning: str
+    passed: bool
+
+
+class ContinuousEvalRecord(BaseModel):
+    """Workflow evaluation trace streamed into BigQuery continuous eval tables."""
+    eval_id: str
+    workflow_id: str
+    timestamp: str = Field(default_factory=utc_now_iso)
+    metrics: list[JudgeMetricResult]
+    overall_passed: bool
+    bigquery_table: str = "contoso_ai_prod.vertex_ai_evaluations.continuous_traces"
+
+
+class BigQueryStudioQueryResult(BaseModel):
+    """Analytics result returned from BigQuery Continuous Evaluation Studio."""
+    query_name: str
+    sql: str
+    rows: list[dict[str, Any]]
+    execution_time_ms: float
+
+
+# ============================================================================
+# 9. FastMCP / Model Context Protocol Google Cloud Server (INV-11, REQ-GCP-MCP-01)
+# ============================================================================
+
+class McpSensitivityTier(str, Enum):
+    """Security tier governing tool execution permissions."""
+    READ_ONLY = "READ_ONLY"
+    DRAFT_MUTATION = "DRAFT_MUTATION"
+    LIVE_SPEND = "LIVE_SPEND"
+
+
+class McpToolDefinition(BaseModel):
+    """Standard Model Context Protocol tool schema."""
+    name: str
+    description: str
+    sensitivity_tier: McpSensitivityTier
+    inputSchema: dict[str, Any]
+
+
+class McpResourceDefinition(BaseModel):
+    """Standard Model Context Protocol resource metadata."""
+    uri: str
+    name: str
+    description: str
+    mimeType: str = "application/json"
+
+
+class McpJsonRpcRequest(BaseModel):
+    """Standard Model Context Protocol JSON-RPC 2.0 request envelope."""
+    jsonrpc: str = "2.0"
+    id: str | int
+    method: str
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class McpJsonRpcResponse(BaseModel):
+    """Standard Model Context Protocol JSON-RPC 2.0 response envelope."""
+    jsonrpc: str = "2.0"
+    id: str | int
+    result: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+
+
+# ============================================================================
+# 10. Cloud Run Eventarc A2A & Resilient Circuit Breaker (INV-12, REQ-GCP-A2A-01)
+# ============================================================================
+
+class CircuitBreakerState(str, Enum):
+    """Tri-state circuit breaker state machine."""
+    CLOSED = "CLOSED"
+    HALF_OPEN = "HALF_OPEN"
+    OPEN = "OPEN"
+
+
+class A2AMessagePayload(BaseModel):
+    """Google Agent-to-Agent (A2A) protocol wire message for Eventarc dispatch."""
+    sender_agent: str
+    target_agent: str
+    intent: str
+    context: dict[str, Any]
+    trace_id: str
+    requires_ack: bool = True
+    timestamp: str = Field(default_factory=utc_now_iso)
+
+
+class CircuitBreakerStatus(BaseModel):
+    """Resilient health status and failure isolation record."""
+    service_name: str
+    state: CircuitBreakerState
+    failure_count: int
+    success_count: int
+    last_failure_timestamp: str | None = None
+    active_model_tier: ModelTier
+    degradation_active: bool = False
+
+
+# ============================================================================
+# 11. Master 8-Gate Master Evaluation Report (REQ-GCP-EVAL-01)
+# ============================================================================
+
+class EightGateEvalReport(BaseModel):
+    """Master evaluation report produced by the comprehensive 8-Gate Verification Suite."""
+    suite_status: Literal["PASSED", "FAILED"]
+    all_gates_passed: bool
+    gates: dict[str, Any]
+    generated_at: str = Field(default_factory=utc_now_iso)

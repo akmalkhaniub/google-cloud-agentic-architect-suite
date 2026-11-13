@@ -294,3 +294,211 @@ def test_fastapi_e2e_endpoints(analyst_identity: GoogleIdentityContext) -> None:
         )
         assert attack_res.status_code == 403
         assert attack_res.json()["status"] == "blocked_by_guardrail"
+
+
+# ============================================================================
+# 6. Pillar 5: Multi-Tier Agent Memory & Distillation (REQ-GCP-MEM-01)
+# ============================================================================
+
+def test_req_gcp_mem_01_working_memory_and_history() -> None:
+    """Verify storing turns in ephemeral working memory and retrieving history."""
+    from src.pillars.p5_agent_memory_store import VertexAgentMemoryStore
+    store = VertexAgentMemoryStore()
+
+    store.store_working_turn("tenant-corp-01", "sess-test", "user", "What is the policy for cloud TPU compute?")
+    store.store_working_turn("tenant-corp-01", "sess-test", "model", "Cloud TPU orders require dual director sign-off.")
+    history = store.get_working_history("tenant-corp-01", "sess-test")
+
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[1]["role"] == "model"
+
+
+def test_req_gcp_mem_02_episodic_recall_cosine_threshold() -> None:
+    """Verify semantic episodic memory recall with cosine similarity >= 0.82."""
+    from src.pillars.p5_agent_memory_store import VertexAgentMemoryStore
+    store = VertexAgentMemoryStore()
+
+    recall = store.recall_memories(
+        tenant_id="tenant-corp-01",
+        query="expedited server procurement for EMEA data center",
+        min_similarity_threshold=0.82,
+    )
+    assert recall.top_similarity_score >= 0.82
+    assert len(recall.recalled_memories) >= 1
+    assert "Cisco Systems" in recall.recalled_memories[0].action_summary
+
+
+def test_req_gcp_mem_03_governance_rule_distillation() -> None:
+    """Verify automated distillation of approved decisions into immutable governance rules."""
+    from src.pillars.p5_agent_memory_store import VertexAgentMemoryStore
+    store = VertexAgentMemoryStore()
+
+    rule = store.distill_rule_from_feedback(
+        tenant_id="tenant-corp-01",
+        category="TPU Quota",
+        rule_text="All GPU/TPU multi-node training clusters require FinOps approval.",
+        source_workflow_id="wf-test-distill",
+    )
+    assert rule.rule_id.startswith("rule-")
+    assert rule.category == "TPU Quota"
+
+    recall = store.recall_memories("tenant-corp-01", "GPU TPU training", min_similarity_threshold=0.50)
+    assert any(r.rule_id == rule.rule_id for r in recall.distilled_rules)
+
+
+# ============================================================================
+# 7. Pillar 6: BigQuery Continuous Evaluation Studio (REQ-GCP-BIGQUERY-EVAL-01)
+# ============================================================================
+
+def test_req_gcp_bq_01_continuous_evaluation_metrics(analyst_identity: GoogleIdentityContext) -> None:
+    """Verify Pointwise LLM-as-a-Judge evaluations (Faithfulness >= 0.90, Relevance >= 0.90)."""
+    from src.pillars.p1_reasoning_orchestrator import VertexReasoningOrchestrator
+    from src.pillars.p6_bigquery_eval_studio import BigQueryEvaluationStudio
+    p1 = VertexReasoningOrchestrator()
+    bq_studio = BigQueryEvaluationStudio()
+
+    req = AgenticWorkflowRequest(
+        workflow_id="wf-test-bq-eval",
+        identity=analyst_identity,
+        user_prompt="Summarize supplier inventory and pricing.",
+        target_spend_usd=100.0,
+    )
+    wf_res = p1.execute_workflow(req)
+    record = bq_studio.evaluate_workflow_response(wf_res)
+
+    assert record.overall_passed is True
+    assert len(record.metrics) == 4
+    faithfulness = next(m for m in record.metrics if m.metric_name == "faithfulness")
+    assert faithfulness.score >= 0.90
+    safety = next(m for m in record.metrics if m.metric_name == "safety_harm")
+    assert safety.score == 0.0
+
+
+def test_req_gcp_bq_02_analytics_sql_queries() -> None:
+    """Verify BigQuery analytical queries (token spend, p95 latency, drift index)."""
+    from src.pillars.p6_bigquery_eval_studio import BigQueryEvaluationStudio
+    bq_studio = BigQueryEvaluationStudio()
+
+    q1 = bq_studio.run_bigquery_analytics_query("token_spend_by_department")
+    assert len(q1.rows) >= 4
+    assert q1.execution_time_ms > 0.0
+
+    q2 = bq_studio.run_bigquery_analytics_query("p95_latency_by_model")
+    assert any(r["model"] == "gemini-1.5-pro-002" for r in q2.rows)
+
+    q3 = bq_studio.run_bigquery_analytics_query("hallucination_drift_index")
+    assert len(q3.rows) >= 1
+
+
+# ============================================================================
+# 8. Pillar 7: FastMCP Google Cloud Server (REQ-GCP-MCP-01)
+# ============================================================================
+
+def test_req_gcp_mcp_01_tools_and_resources_list() -> None:
+    """Verify FastMCP JSON-RPC ping, tools/list, and resources/list schemas."""
+    from src.core.schemas import McpJsonRpcRequest
+    from src.pillars.p7_mcp_google_server import GoogleCloudMcpServer
+    server = GoogleCloudMcpServer()
+
+    ping = server.handle_jsonrpc(McpJsonRpcRequest(id=1, method="ping"))
+    assert ping.result["status"] == "ok"
+
+    tools = server.handle_jsonrpc(McpJsonRpcRequest(id=2, method="tools/list"))
+    tool_names = [t["name"] for t in tools.result["tools"]]
+    assert "dlp_inspect_and_tokenize" in tool_names
+    assert "vertex_reasoning_execute" in tool_names
+
+    resources = server.handle_jsonrpc(McpJsonRpcRequest(id=3, method="resources/list"))
+    assert len(resources.result["resources"]) >= 3
+
+
+def test_req_gcp_mcp_02_live_spend_authorization_gate() -> None:
+    """Verify FastMCP LIVE_SPEND authorization gate rejects unauthenticated callers."""
+    from src.core.schemas import McpJsonRpcRequest
+    from src.pillars.p7_mcp_google_server import GoogleCloudMcpServer
+    server = GoogleCloudMcpServer()
+
+    # Blocked without token
+    blocked = server.handle_jsonrpc(McpJsonRpcRequest(
+        id=10,
+        method="tools/call",
+        params={"name": "vertex_reasoning_execute", "arguments": {"user_prompt": "Spend $10,000"}},
+    ))
+    assert blocked.error is not None
+    assert blocked.error["code"] == -32001
+
+    # Permitted with valid OIDC token
+    permitted = server.handle_jsonrpc(
+        McpJsonRpcRequest(
+            id=11,
+            method="tools/call",
+            params={"name": "vertex_reasoning_execute", "arguments": {"user_prompt": "Audit transactions", "target_spend_usd": 100}},
+        ),
+        auth_token="oidc-token-valid-secops",
+    )
+    assert permitted.result is not None
+    assert permitted.result["status"] == "completed"
+
+
+# ============================================================================
+# 9. Pillar 8: Cloud Run Eventarc A2A & Resilient Circuit Breaker (REQ-GCP-A2A-01)
+# ============================================================================
+
+def test_req_gcp_a2a_01_normal_message_dispatch() -> None:
+    """Verify normal Agent-to-Agent message dispatch via Eventarc."""
+    from src.pillars.p8_a2a_resilient_circuit_breaker import A2AResilientCircuitBreaker
+    cb = A2AResilientCircuitBreaker()
+
+    res = cb.execute_with_circuit_breaker(
+        sender_agent="SupervisorAgent",
+        target_agent="ComplianceAuditorAgent",
+        intent="CLEARANCE_VERIFICATION",
+    )
+    assert res["execution_status"] == "SUCCESS"
+    assert res["circuit_state"] == "CLOSED"
+    assert res["degradation_active"] is False
+
+
+def test_req_gcp_a2a_02_circuit_breaker_fault_trip_and_degradation() -> None:
+    """Verify consecutive 503 faults trip circuit to OPEN and trigger Gemini Flash fallback."""
+    from src.pillars.p8_a2a_resilient_circuit_breaker import A2AResilientCircuitBreaker
+    cb = A2AResilientCircuitBreaker(failure_threshold=3)
+
+    # Inject 3 consecutive 503 failures
+    for _ in range(3):
+        cb.record_failure(503)
+
+    status = cb.get_status()
+    assert status.state.value == "OPEN"
+    assert status.active_model_tier.value == "gemini-1.5-flash-002"
+    assert status.degradation_active is True
+
+    # Degradation execution
+    res = cb.execute_with_circuit_breaker(
+        sender_agent="SupervisorAgent",
+        target_agent="AnalysisAgent",
+        intent="DEGRADED_ANALYSIS",
+        simulate_fault=503,
+    )
+    assert res["execution_status"] == "DEGRADED_FAILOVER"
+    assert res["degradation_active"] is True
+
+    # Recovery resets state
+    cb.reset_circuit()
+    assert cb.get_status().state.value == "CLOSED"
+
+
+# ============================================================================
+# 10. Master 8-Gate Evaluation Suite
+# ============================================================================
+
+def test_req_gcp_eval_02_eight_gate_evaluation_suite() -> None:
+    """Verify the full 8-Gate Automated Evaluation Suite passes 100% across all pillars."""
+    from src.evals.runner import run_eight_gate_evaluation
+    report = run_eight_gate_evaluation()
+    assert report["suite_status"] == "PASSED"
+    assert report["all_gates_passed"] is True
+    assert len(report["gates"]) == 8
+    for gate_name, gate_data in report["gates"].items():
+        assert gate_data["passed"] is True, f"Gate {gate_name} failed: {gate_data}"
