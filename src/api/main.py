@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Response, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.core.harness import GoogleCloudAgentHarness
@@ -29,7 +29,11 @@ from src.core.schemas import (
     ModelArmorVerdict,
     WorkflowStatus,
 )
-from src.evals.runner import run_eight_gate_evaluation, run_four_gate_evaluation
+from src.evals.runner import (
+    run_eight_gate_evaluation,
+    run_four_gate_evaluation,
+    run_twelve_gate_evaluation,
+)
 from src.pillars.p1_reasoning_orchestrator import VertexReasoningOrchestrator
 from src.pillars.p2_zero_trust_model_armor import ZeroTrustModelArmorEngine
 from src.pillars.p3_dlp_governance_rag import DlpGovernanceAndGroundedRagEngine
@@ -38,30 +42,40 @@ from src.pillars.p5_agent_memory_store import VertexAgentMemoryStore
 from src.pillars.p6_bigquery_eval_studio import BigQueryEvaluationStudio
 from src.pillars.p7_mcp_google_server import GoogleCloudMcpServer
 from src.pillars.p8_a2a_resilient_circuit_breaker import A2AResilientCircuitBreaker
+from src.pillars.p9_prompt_registry_canary import VertexPromptRegistryEngine
+from src.pillars.p10_ai_governance_gdpr_c2pa import AiGovernancePrivacyEngine
+from src.pillars.p11_sse_streaming_bus import SseStreamingAgentBus
+from src.pillars.p12_sovereignty_gsu_finops import SovereigntyAndGsuFinOpsEngine
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Initialize shared Google Cloud Agent Harness and the 8 Pillar engines."""
+    """Initialize shared Google Cloud Agent Harness and all 12 Pillar engines."""
     harness = GoogleCloudAgentHarness()
+    p1 = VertexReasoningOrchestrator(harness=harness)
+    p5 = VertexAgentMemoryStore()
     app.state.harness = harness
-    app.state.pillar1 = VertexReasoningOrchestrator(harness=harness)
+    app.state.pillar1 = p1
     app.state.pillar2 = ZeroTrustModelArmorEngine(harness=harness)
     app.state.pillar3 = DlpGovernanceAndGroundedRagEngine(harness=harness)
     app.state.pillar4 = ResiliencyAndObservabilityEngine(harness=harness)
-    app.state.pillar5 = VertexAgentMemoryStore()
+    app.state.pillar5 = p5
     app.state.pillar6 = BigQueryEvaluationStudio()
     app.state.pillar7 = GoogleCloudMcpServer()
     app.state.pillar8 = A2AResilientCircuitBreaker()
+    app.state.pillar9 = VertexPromptRegistryEngine()
+    app.state.pillar10 = AiGovernancePrivacyEngine(memory_store=p5)
+    app.state.pillar11 = SseStreamingAgentBus(orchestrator=p1, harness=harness)
+    app.state.pillar12 = SovereigntyAndGsuFinOpsEngine()
     yield
 
 
 app = FastAPI(
     title="Google Cloud Professional Agentic Architect Suite",
-    description="Enterprise reference architecture for Securing, Governing, and Orchestrating Agentic Workflows on GCP.",
-    version="1.0.0",
+    description="12-Pillar Enterprise Reference Architecture for Securing, Governing, and Orchestrating Agentic Workflows on GCP.",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -92,6 +106,10 @@ async def health_check() -> dict[str, Any]:
             "Pillar 6: BigQuery Continuous Evaluation & Vertex AI Studio",
             "Pillar 7: FastMCP / Model Context Protocol Google Cloud Server",
             "Pillar 8: Cloud Run Eventarc A2A & Resilient Circuit Breaker",
+            "Pillar 9: Vertex AI Prompt Registry, Canary A/B Routing & PSI Drift Rollback",
+            "Pillar 10: EU AI Act Compliance, GDPR Right-to-Erasure & C2PA Provenance",
+            "Pillar 11: Real-Time SSE Streaming Agent Execution & Telemetry Bus",
+            "Pillar 12: Multi-Region Sovereignty Router & Vertex GSU FinOps Economics",
         ],
         "cloud_trace_spans_recorded": len(harness.trace_store),
         "dlq_messages_count": len(harness.dlq_store),
@@ -291,3 +309,122 @@ async def dispatch_a2a_agent_call(
     """Dispatches inter-agent communication through resilient circuit breaker."""
     p8: A2AResilientCircuitBreaker = app.state.pillar8
     return p8.execute_with_circuit_breaker(sender_agent, target_agent, intent, simulate_fault=simulate_fault)
+
+
+# ============================================================================
+# Cross-Cutting: 12-Gate Master Evaluation Suite
+# ============================================================================
+
+@app.post("/api/v1/evals/twelve-gate/run")
+async def trigger_twelve_gate_evals() -> dict[str, Any]:
+    """Executes the full 12-Gate Enterprise Evaluation Suite across all 12 pillars."""
+    return run_twelve_gate_evaluation()
+
+
+# ============================================================================
+# Pillar 9: Vertex AI Prompt Registry, Canary Routing & Drift Auto-Rollback
+# ============================================================================
+
+@app.get("/api/v1/pillar9/prompts")
+async def list_registered_prompts(prompt_id: str = "enterprise-procurement-supervisor") -> list[dict[str, Any]]:
+    """Lists all SHA-256 pinned prompt versions in the registry."""
+    p9: VertexPromptRegistryEngine = app.state.pillar9
+    return [v.model_dump() for v in p9.list_versions(prompt_id)]
+
+
+@app.post("/api/v1/pillar9/canary/route")
+async def route_canary_prompt(
+    request_id: str = "req-canary-demo-01",
+    prompt_id: str = "enterprise-procurement-supervisor",
+) -> dict[str, Any]:
+    """Deterministically routes an inbound request to Champion or Canary prompt."""
+    p9: VertexPromptRegistryEngine = app.state.pillar9
+    return p9.route_canary_request(request_id=request_id, prompt_id=prompt_id).model_dump()
+
+
+@app.post("/api/v1/pillar9/drift/evaluate")
+async def evaluate_prompt_drift(
+    prompt_id: str = "enterprise-procurement-supervisor",
+    observed_psi: float = 0.08,
+    observed_cosine_shift: float = 0.04,
+) -> dict[str, Any]:
+    """Evaluates PSI & semantic drift and auto-rolls back Canary if thresholds breach."""
+    p9: VertexPromptRegistryEngine = app.state.pillar9
+    return p9.evaluate_drift_and_auto_rollback(
+        prompt_id=prompt_id,
+        observed_psi=observed_psi,
+        observed_cosine_shift=observed_cosine_shift,
+    ).model_dump()
+
+
+# ============================================================================
+# Pillar 10: EU AI Act, GDPR Right-to-Erasure & C2PA Provenance
+# ============================================================================
+
+@app.post("/api/v1/pillar10/eu-ai-act/classify")
+async def classify_eu_ai_act(
+    system_name: str = "VertexProcurementSwarm",
+    use_case_domain: str = "Automated financial disbursement and enterprise procurement",
+) -> dict[str, Any]:
+    """Classifies AI system risk tier and mandatory controls under the EU AI Act."""
+    p10: AiGovernancePrivacyEngine = app.state.pillar10
+    return p10.classify_eu_ai_act_risk(system_name=system_name, use_case_domain=use_case_domain).model_dump()
+
+
+@app.post("/api/v1/pillar10/gdpr/erase")
+async def execute_gdpr_erasure(
+    subject_email: str = "analyst@contoso.internal",
+    tenant_id: str = "tenant-corp-01",
+) -> dict[str, Any]:
+    """Executes GDPR Article 17 Right-to-Erasure across all data stores with HMAC certificate."""
+    p10: AiGovernancePrivacyEngine = app.state.pillar10
+    return p10.execute_gdpr_right_to_erasure(subject_email=subject_email, tenant_id=tenant_id).model_dump()
+
+
+@app.post("/api/v1/pillar10/c2pa/sign")
+async def sign_c2pa_artifact(
+    artifact_content: str = "Executive Procurement Brief grounded in BigQuery Gold Tables.",
+    generator_model: str = "gemini-1.5-pro-002",
+) -> dict[str, Any]:
+    """Signs synthetic agent output with a C2PA cryptographic provenance manifest."""
+    p10: AiGovernancePrivacyEngine = app.state.pillar10
+    return p10.sign_c2pa_provenance(artifact_content=artifact_content, generator_model=generator_model).model_dump()
+
+
+# ============================================================================
+# Pillar 11: Real-Time SSE Streaming Agent Bus
+# ============================================================================
+
+@app.post("/api/v1/pillar11/stream/workflow")
+async def stream_agentic_workflow_sse(request: AgenticWorkflowRequest) -> StreamingResponse:
+    """Streams real-time agent reasoning and guardrail telemetry via Server-Sent Events (SSE)."""
+    p11: SseStreamingAgentBus = app.state.pillar11
+    return StreamingResponse(
+        p11.stream_workflow_sse(request, delay_seconds=0.02),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
+
+
+# ============================================================================
+# Pillar 12: Multi-Region Sovereignty Router & Vertex GSU FinOps Economics
+# ============================================================================
+
+@app.post("/api/v1/pillar12/sovereignty/route")
+async def route_sovereignty_region(tenant_jurisdiction: str = "EU-DE") -> dict[str, Any]:
+    """Enforces regional data residency and pins Vertex AI / Cloud Run endpoints."""
+    p12: SovereigntyAndGsuFinOpsEngine = app.state.pillar12
+    return p12.route_sovereign_region(tenant_jurisdiction=tenant_jurisdiction).model_dump()
+
+
+@app.post("/api/v1/pillar12/finops/gsu-calculator")
+async def calculate_gsu_finops(
+    monthly_tokens_millions: float = 1200.0,
+    enterprise_arr_monthly_usd: float = 25000.0,
+) -> dict[str, Any]:
+    """Models Vertex AI Provisioned Throughput (GSU) vs. PAYG FinOps break-even & gross margin."""
+    p12: SovereigntyAndGsuFinOpsEngine = app.state.pillar12
+    return p12.calculate_gsu_vs_payg_finops(
+        monthly_tokens_millions=monthly_tokens_millions,
+        enterprise_arr_monthly_usd=enterprise_arr_monthly_usd,
+    ).model_dump()

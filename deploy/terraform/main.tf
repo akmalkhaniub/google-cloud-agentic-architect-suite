@@ -175,3 +175,64 @@ output "service_account_email" {
   value       = google_service_account.agent_runner.email
   description = "The email of the dedicated Agent Service Account"
 }
+
+# 6. Cloud Memorystore (Redis) for Multi-Tier Episodic Agent Memory (Pillar 5)
+resource "google_redis_instance" "agent_memorystore" {
+  name               = "redis-agent-episodic-memory"
+  tier               = "STANDARD_HA"
+  memory_size_gb     = 4
+  region             = var.region
+  redis_version      = "REDIS_7_0"
+  transit_encryption_mode = "SERVER_AUTHENTICATION"
+  auth_enabled       = true
+  customer_managed_key = google_kms_crypto_key.agent_cmek.id
+}
+
+# 7. BigQuery Continuous Evaluation Dataset with CMEK (Pillar 6)
+resource "google_bigquery_dataset" "vertex_ai_evaluations" {
+  dataset_id                  = "vertex_ai_evaluations"
+  friendly_name               = "Vertex AI Continuous Agent Evaluations"
+  description                 = "Streaming LLM-as-a-Judge faithfulness, relevance, and safety traces"
+  location                    = var.region
+  default_table_expiration_ms = 7776000000 # 90 days
+
+  default_encryption_configuration {
+    kms_key_name = google_kms_crypto_key.agent_cmek.id
+  }
+}
+
+# 8. Cloud Run Eventarc Trigger for Agent-to-Agent (A2A) Dispatch (Pillar 8)
+resource "google_eventarc_trigger" "a2a_agent_trigger" {
+  name     = "trig-a2a-eventarc-dispatch"
+  location = var.region
+  service_account = google_service_account.agent_runner.email
+
+  matching_criteria {
+    attribute = "type"
+    value     = "google.cloud.pubsub.topic.v1.messagePublished"
+  }
+
+  transport {
+    pubsub {
+      topic = google_pubsub_topic.agent_events_topic.id
+    }
+  }
+
+  destination {
+    cloud_run_service {
+      service = google_cloud_run_v2_service.agent_service.name
+      region  = var.region
+      path    = "/api/v1/pillar8/a2a/dispatch"
+    }
+  }
+}
+
+output "bigquery_eval_dataset_id" {
+  value       = google_bigquery_dataset.vertex_ai_evaluations.dataset_id
+  description = "BigQuery dataset ID for continuous LLM-as-a-Judge telemetry"
+}
+
+output "memorystore_redis_host" {
+  value       = google_redis_instance.agent_memorystore.host
+  description = "Private IP host of Cloud Memorystore Redis for episodic memory"
+}

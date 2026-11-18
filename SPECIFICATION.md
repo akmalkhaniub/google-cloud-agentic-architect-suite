@@ -26,6 +26,14 @@
     - Model Context Protocol integration **MUST** conform to the standard JSON-RPC 2.0 interface (`ping`, `tools/list`, `resources/list`, `tools/call`) with strict 3-tier authorization (`READ_ONLY`, `DRAFT_MUTATION`, `LIVE_SPEND` requiring valid Workload Identity OIDC tokens).
 12. **INV-12 (Eventarc A2A Dispatch & Resilient Circuit Breaker)**:
     - Inter-agent communication **MUST** route through Google Agent-to-Agent (A2A) protocol wire envelopes and enforce a tri-state circuit breaker (`CLOSED` / `HALF_OPEN` / `OPEN`) with automated graceful degradation from Gemini 1.5 Pro to Gemini 1.5 Flash upon repeated upstream failures.
+13. **INV-13 (Immutable Prompt Registry, Canary Splitting & PSI Drift Auto-Rollback)**:
+    - All production prompt templates **MUST** be pinned by SHA-256 checksums, routed via deterministic Champion/Canary buckets, and automatically rolled back to Champion whenever Population Stability Index (`PSI >= 0.25`) or semantic cosine shift (`>= 0.20`) breaches thresholds.
+14. **INV-14 (EU AI Act Risk Controls, GDPR Article 17 Erasure & C2PA Provenance)**:
+    - Enterprise AI workloads **MUST** be classified under the EU AI Act risk taxonomy (blocking Prohibited systems and enforcing HITL for High-Risk domains), support cascading GDPR Right-to-Erasure with HMAC-signed certificates, and sign synthetic outputs with verifiable C2PA provenance manifests.
+15. **INV-15 (Real-Time SSE Streaming Telemetry & Short-Circuit Isolation)**:
+    - Live execution endpoints **MUST** stream structured `text/event-stream` frames for Workload Identity, Model Armor, DLP, and agent handoffs, and immediately terminate the stream with a `BLOCKED` frame upon guardrail violation.
+16. **INV-16 (Multi-Region Data Sovereignty & Vertex GSU FinOps Guardrails)**:
+    - Cross-border inference egress **MUST** be blocked via deterministic regional routing (`europe-west4`, `us-central1`, `asia-northeast1`), and monthly token commitments **MUST** be evaluated against Vertex AI Provisioned Throughput (GSU) break-even and SaaS gross-margin thresholds.
 
 ---
 
@@ -45,7 +53,11 @@
 | **`REQ-GCP-BIGQUERY-EVAL-01`** | Pillar 6: BigQuery Continuous Eval | Pointwise LLM-as-a-Judge evaluation streaming traces to BigQuery with SQL analytics (P95 latency, drift index, and departmental spend). | **Advanced:** MLOps, Model Monitoring & BigQuery Analytics |
 | **`REQ-GCP-MCP-01`** | Pillar 7: FastMCP Google Cloud Server | FastMCP JSON-RPC 2.0 server exposing GCP agent tools & resources to external AI coding agents with `LIVE_SPEND` authorization gating. | **Advanced:** Open Protocol Interoperability & MCP Standard |
 | **`REQ-GCP-A2A-01`** | Pillar 8: Eventarc A2A & Circuit Breaker | Agent-to-Agent wire protocol dispatcher with self-healing tri-state circuit breaker and automated model cascade degradation (Pro to Flash). | **Advanced:** Multi-Agent Swarms & Resilient Architecture |
-| **`REQ-GCP-EVAL-01`** | Cross-Cutting: 8-Gate Evals | Comprehensive 8-Gate Automated Verification Suite covering all 8 pillars with 100% compliance verification. | **All:** Enterprise Production Readiness |
+| **`REQ-GCP-PROMPT-01`** | Pillar 9: Prompt Registry & Canary Drift | Immutable SHA-256 prompt versioning, deterministic Champion/Canary traffic routing, and automated PSI/Cosine drift rollback. | **Production Ops:** LLMOps, Canary Releases & Drift Guardrails |
+| **`REQ-GCP-GOV-01`** | Pillar 10: EU AI Act, GDPR & C2PA | Automated EU AI Act risk classification, cascading GDPR Art. 17 Right-to-Erasure certificates, and tamper-evident C2PA content provenance signing. | **Governance:** EU AI Act, GDPR Privacy & Content Provenance |
+| **`REQ-GCP-SSE-01`** | Pillar 11: Real-Time SSE Streaming Bus | Async Server-Sent Events (`text/event-stream`) streaming live security checks, DLP redactions, and multi-agent handoffs to operator consoles. | **UX & Telemetry:** Real-Time Streaming Agent Observability |
+| **`REQ-GCP-FINOPS-GSU-01`** | Pillar 12: Sovereignty & GSU FinOps | Multi-region data residency enforcement (`europe-west4`, `us-central1`, `asia-northeast1`) and Vertex AI GSU vs. PAYG FinOps crossover modeling. | **FinOps & Sovereignty:** Cloud Economics & Global Residency |
+| **`REQ-GCP-EVAL-01`** | Cross-Cutting: 12-Gate Evals & CI/CD | Comprehensive 12-Gate Automated Verification Suite + Eval-Gated GitHub Actions CI/CD covering all 12 pillars with 100% compliance. | **All:** Enterprise Production Readiness |
 
 ---
 
@@ -65,4 +77,8 @@
 | `REQ-GCP-BIGQUERY-EVAL-01` | `src/pillars/p6_bigquery_eval_studio.py` | `tests/test_suite.py::test_req_gcp_bq_01_continuous_evaluation_metrics`<br/>`tests/test_suite.py::test_req_gcp_bq_02_analytics_sql_queries` |
 | `REQ-GCP-MCP-01` | `src/pillars/p7_mcp_google_server.py` | `tests/test_suite.py::test_req_gcp_mcp_01_tools_and_resources_list`<br/>`tests/test_suite.py::test_req_gcp_mcp_02_live_spend_authorization_gate` |
 | `REQ-GCP-A2A-01` | `src/pillars/p8_a2a_resilient_circuit_breaker.py` | `tests/test_suite.py::test_req_gcp_a2a_01_normal_message_dispatch`<br/>`tests/test_suite.py::test_req_gcp_a2a_02_circuit_breaker_fault_trip_and_degradation` |
-| `REQ-GCP-EVAL-01` | `src/evals/runner.py` | `tests/test_suite.py::test_req_gcp_eval_01_four_gate_evaluation_suite`<br/>`tests/test_suite.py::test_req_gcp_eval_02_eight_gate_evaluation_suite` |
+| `REQ-GCP-PROMPT-01` | `src/pillars/p9_prompt_registry_canary.py` | `tests/test_suite.py::test_req_gcp_prompt_01_sha256_version_pinning_and_canary_routing`<br/>`tests/test_suite.py::test_req_gcp_prompt_02_psi_drift_triggers_canary_auto_rollback` |
+| `REQ-GCP-GOV-01` | `src/pillars/p10_ai_governance_gdpr_c2pa.py` | `tests/test_suite.py::test_req_gcp_gov_01_eu_ai_act_risk_classification`<br/>`tests/test_suite.py::test_req_gcp_gov_02_gdpr_article_17_cascading_erasure`<br/>`tests/test_suite.py::test_req_gcp_gov_03_c2pa_provenance_signing_and_tamper_detection` |
+| `REQ-GCP-SSE-01` | `src/pillars/p11_sse_streaming_bus.py` | `tests/test_suite.py::test_req_gcp_sse_01_streaming_events_ordered_lifecycle`<br/>`tests/test_suite.py::test_req_gcp_sse_02_streaming_short_circuit_on_model_armor_block`<br/>`tests/test_suite.py::test_req_gcp_sse_03_fastapi_sse_endpoint_stream` |
+| `REQ-GCP-FINOPS-GSU-01` | `src/pillars/p12_sovereignty_gsu_finops.py` | `tests/test_suite.py::test_req_gcp_finops_02_multi_region_sovereignty_routing`<br/>`tests/test_suite.py::test_req_gcp_finops_03_gsu_vs_payg_crossover_economics` |
+| `REQ-GCP-EVAL-01` | `src/evals/runner.py` | `tests/test_suite.py::test_req_gcp_eval_01_four_gate_evaluation_suite`<br/>`tests/test_suite.py::test_req_gcp_eval_02_eight_gate_evaluation_suite`<br/>`tests/test_suite.py::test_req_gcp_eval_03_twelve_gate_master_evaluation_suite` |

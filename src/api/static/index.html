@@ -55,8 +55,8 @@
       </div>
 
       <div class="flex items-center gap-2.5">
-        <button onclick="runEightGateSuite()" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all active:scale-[0.99] flex items-center gap-1.5">
-          <span>⚡</span> Run 8-Gate Evaluation Suite
+        <button onclick="runTwelveGateSuite()" class="px-3.5 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-all active:scale-[0.99] flex items-center gap-1.5">
+          <span>⚡</span> Run 12-Gate Evaluation Suite
         </button>
         <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-colors" title="Toggle Theme">
           <span id="themeIcon">☀️</span>
@@ -90,8 +90,20 @@
       <button onclick="switchTab('p8')" id="tab-p8" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
         8. A2A & Circuit Breaker
       </button>
+      <button onclick="switchTab('p9')" id="tab-p9" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
+        9. Prompt Canary & Drift
+      </button>
+      <button onclick="switchTab('p10')" id="tab-p10" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
+        10. EU AI Act, GDPR & C2PA
+      </button>
+      <button onclick="switchTab('p11')" id="tab-p11" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
+        11. Live SSE Stream
+      </button>
+      <button onclick="switchTab('p12')" id="tab-p12" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
+        12. Sovereignty & GSU
+      </button>
       <button onclick="switchTab('evals')" id="tab-evals" class="tab-btn px-3 py-2 text-xs font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 rounded-t-lg transition-all whitespace-nowrap">
-        9. 8-Gate Evals & ADRs
+        13. 12-Gate Evals
       </button>
     </div>
   </header>
@@ -426,7 +438,126 @@
     </section>
 
     <!-- ================================================================== -->
-    <!-- PANEL 9: 8-GATE EVALUATIONS & ARCHITECTURE DECISION RECORDS         -->
+    <!-- PILLAR 9: VERTEX AI PROMPT REGISTRY, CANARY ROUTING & DRIFT        -->
+    <!-- ================================================================== -->
+    <section id="panel-p9" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold">Prompt Registry & Canary Drift</h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">REQ-GCP-PROMPT-01</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Immutable SHA-256 checksum-pinned prompt versions with deterministic Champion/Canary traffic splits and automated PSI/Cosine drift rollback.
+          </p>
+          <div class="space-y-3 pt-2">
+            <button onclick="loadP9Prompts()" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-all">
+              📌 Inspect SHA-256 Pinned Versions
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="evaluateP9Drift(0.08, 0.04)" class="py-2 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 text-xs font-semibold hover:bg-emerald-500/20">
+                ✓ Healthy PSI (0.08)
+              </button>
+              <button onclick="evaluateP9Drift(0.34, 0.25)" class="py-2 px-3 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-semibold hover:bg-rose-500/20">
+                ⚠️ Inject Drift (PSI 0.34)
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-7 space-y-4" id="p9ResultContainer"></div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- PILLAR 10: EU AI ACT, GDPR RIGHT-TO-ERASURE & C2PA PROVENANCE      -->
+    <!-- ================================================================== -->
+    <section id="panel-p10" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold">EU AI Act, GDPR & C2PA Provenance</h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">REQ-GCP-GOV-01</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Automated EU AI Act risk tiering, cascading GDPR Article 17 Right-to-Erasure with HMAC certificates, and C2PA cryptographic provenance signing.
+          </p>
+          <div class="space-y-2.5 pt-2">
+            <button onclick="runP10EuAiAct('Enterprise financial disbursement')" class="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium">
+              ⚖️ Classify EU AI Act Risk (Financial Disbursement)
+            </button>
+            <button onclick="runP10GdprErase()" class="w-full py-2 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium">
+              🗑️ Execute GDPR Art. 17 Cascading Erasure
+            </button>
+            <button onclick="runP10C2paSign()" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-medium">
+              🔏 Sign Synthetic Output with C2PA Manifest
+            </button>
+          </div>
+        </div>
+        <div class="lg:col-span-7 space-y-4" id="p10ResultContainer"></div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- PILLAR 11: REAL-TIME SSE STREAMING AGENT EXECUTION CONSOLE         -->
+    <!-- ================================================================== -->
+    <section id="panel-p11" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold">Live SSE Agent Stream Bus</h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">REQ-GCP-SSE-01</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Real-time Server-Sent Events (<code>text/event-stream</code>) broadcasting live Workload Identity, Model Armor, Cloud DLP, and multi-agent trajectory events.
+          </p>
+          <div class="space-y-3 pt-2">
+            <input type="text" id="p11Prompt" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900" value="Audit Q4 supplier SLA fulfillment and compute risk score." />
+            <button onclick="startP11SseStream()" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-all">
+              📡 Stream Live SSE Execution Events
+            </button>
+          </div>
+        </div>
+        <div class="lg:col-span-7 space-y-4" id="p11ResultContainer"></div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- PILLAR 12: MULTI-REGION SOVEREIGNTY & VERTEX GSU FINOPS            -->
+    <!-- ================================================================== -->
+    <section id="panel-p12" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold">Sovereignty Router & GSU FinOps</h2>
+            <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">REQ-GCP-FINOPS-GSU-01</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Regional data residency routing (EU GDPR, US FedRAMP, APJ) and Vertex AI Provisioned Throughput (GSU) vs. PAYG FinOps crossover modeling.
+          </p>
+          <div class="space-y-3 pt-2">
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tenant Jurisdiction</label>
+              <select id="p12Jurisdiction" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                <option value="EU-DE">EU / Germany (GDPR &rarr; europe-west4)</option>
+                <option value="US-FEDRAMP">US Federal (FedRAMP &rarr; us-central1)</option>
+                <option value="JP-APJ">Japan / APJ (APPI &rarr; asia-northeast1)</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Monthly Volume (Millions of Tokens)</label>
+              <input type="number" id="p12Tokens" class="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 font-mono" value="1200" />
+            </div>
+            <button onclick="executeP12SovereigntyAndFinOps()" class="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-sm transition-all">
+              🌍 Compute Sovereign Route & GSU Crossover
+            </button>
+          </div>
+        </div>
+        <div class="lg:col-span-7 space-y-4" id="p12ResultContainer"></div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- PANEL 13: 12-GATE EVALUATIONS & ARCHITECTURE DECISION RECORDS       -->
     <!-- ================================================================== -->
     <section id="panel-evals" class="hidden space-y-6">
       <div id="evalReportContainer"></div>
@@ -450,7 +581,7 @@
 
     // Tab Navigation
     function switchTab(tab) {
-      ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'evals'].forEach(id => {
+      ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'evals'].forEach(id => {
         const panel = document.getElementById(`panel-${id}`);
         if (panel) panel.classList.toggle('hidden', id !== tab);
         const btn = document.getElementById(`tab-${id}`);
@@ -1080,6 +1211,190 @@
       `;
     }
 
+    // =========================================================================
+    // Pillar 9: Prompt Registry, Canary Routing & Drift Auto-Rollback
+    // =========================================================================
+    async function loadP9Prompts() {
+      const data = await fetch('/api/v1/pillar9/prompts').then(r => r.json());
+      const rows = data.map(v => `
+        <div class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-500">${v.version} (${v.status})</span>
+            <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">Weight: ${(v.traffic_weight * 100).toFixed(0)}%</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-300">${v.template_text}</p>
+          <div class="text-[10px] font-mono text-slate-400 truncate">SHA-256: ${v.sha256_checksum}</div>
+        </div>
+      `).join('');
+      document.getElementById('p9ResultContainer').innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+          <h3 class="text-base font-semibold border-b border-slate-200 dark:border-slate-800 pb-2">Pinned Prompt Registry Versions</h3>
+          ${rows}
+        </div>
+      `;
+    }
+
+    async function evaluateP9Drift(psi, cosine) {
+      const res = await fetch(`/api/v1/pillar9/drift/evaluate?observed_psi=${psi}&observed_cosine_shift=${cosine}`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('p9ResultContainer').innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-base font-semibold">Drift & Auto-Rollback Evaluation</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${data.drift_detected ? 'bg-rose-500/15 text-rose-500' : 'bg-emerald-500/15 text-emerald-500'}">
+              ${data.drift_detected ? '⚠️ DRIFT BREACH -> ROLLED BACK' : '✓ HEALTHY'}
+            </span>
+          </div>
+          <pre class="p-3 rounded-lg bg-slate-900 text-slate-200 font-mono text-xs overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // Pillar 10: EU AI Act, GDPR Right-to-Erasure & C2PA Provenance
+    // =========================================================================
+    async function runP10EuAiAct(domain) {
+      const data = await fetch(`/api/v1/pillar10/eu-ai-act/classify?use_case_domain=${encodeURIComponent(domain)}`, { method: 'POST' }).then(r => r.json());
+      renderP10Json('EU AI Act Risk Classification', data);
+    }
+
+    async function runP10GdprErase() {
+      const data = await fetch('/api/v1/pillar10/gdpr/erase?subject_email=analyst@contoso.internal', { method: 'POST' }).then(r => r.json());
+      renderP10Json('GDPR Article 17 Erasure Certificate (HMAC-Signed)', data);
+    }
+
+    async function runP10C2paSign() {
+      const data = await fetch('/api/v1/pillar10/c2pa/sign', { method: 'POST' }).then(r => r.json());
+      renderP10Json('C2PA Cryptographic Content Provenance Manifest', data);
+    }
+
+    function renderP10Json(title, data) {
+      document.getElementById('p10ResultContainer').innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+          <h3 class="text-base font-semibold border-b border-slate-200 dark:border-slate-800 pb-2">${title}</h3>
+          <pre class="p-3 rounded-lg bg-slate-900 text-slate-200 font-mono text-xs overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // Pillar 11: Real-Time SSE Streaming Agent Bus
+    // =========================================================================
+    async function startP11SseStream() {
+      const prompt = document.getElementById('p11Prompt').value;
+      const container = document.getElementById('p11ResultContainer');
+      container.innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-base font-semibold">Live SSE Event Stream (text/event-stream)</h3>
+            <span class="px-2 py-0.5 rounded-full text-xs font-mono bg-blue-500/15 text-blue-500">STREAMING...</span>
+          </div>
+          <div id="sseEventList" class="space-y-2"></div>
+        </div>
+      `;
+
+      const resp = await fetch('/api/v1/pillar11/stream/workflow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workflow_id: 'wf-sse-ui-' + Math.floor(Math.random() * 9000 + 1000),
+          identity: {
+            project_id: "contoso-ai-prod-01",
+            user_email: "alex.miller@contoso.com",
+            roles: ["roles/aiplatform.user"],
+            has_valid_oidc_token: true
+          },
+          user_prompt: prompt,
+          target_spend_usd: 450.0
+        })
+      });
+
+      const text = await resp.text();
+      const lines = text.split('\n').filter(l => l.startsWith('data: '));
+      const listEl = document.getElementById('sseEventList');
+      lines.forEach(line => {
+        const evt = JSON.parse(line.replace('data: ', ''));
+        listEl.innerHTML += `
+          <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-mono space-y-0.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-blue-500">${evt.stage}</span>
+              <span class="text-[11px] text-emerald-500">${evt.status} • ${evt.latency_ms.toFixed(1)}ms</span>
+            </div>
+            <div class="text-slate-600 dark:text-slate-300 font-sans">${evt.message}</div>
+          </div>
+        `;
+      });
+    }
+
+    // =========================================================================
+    // Pillar 12: Multi-Region Sovereignty Router & GSU FinOps
+    // =========================================================================
+    async function executeP12SovereigntyAndFinOps() {
+      const jurisdiction = document.getElementById('p12Jurisdiction').value;
+      const tokens = parseFloat(document.getElementById('p12Tokens').value || '1200');
+      const [sov, gsu] = await Promise.all([
+        fetch(`/api/v1/pillar12/sovereignty/route?tenant_jurisdiction=${encodeURIComponent(jurisdiction)}`, { method: 'POST' }).then(r => r.json()),
+        fetch(`/api/v1/pillar12/finops/gsu-calculator?monthly_tokens_millions=${tokens}`, { method: 'POST' }).then(r => r.json())
+      ]);
+      document.getElementById('p12ResultContainer').innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <h3 class="text-base font-semibold">Sovereign Region: ${sov.selected_gcp_region}</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-500">${gsu.recommended_tier}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <span class="text-slate-500">PAYG Cost:</span> <strong class="text-slate-800 dark:text-slate-100">$${gsu.payg_monthly_cost_usd.toLocaleString()}/mo</strong><br/>
+              <span class="text-slate-500">GSU Cost (${gsu.gsu_recommended_units} units):</span> <strong class="text-blue-500">$${gsu.gsu_monthly_cost_usd.toLocaleString()}/mo</strong>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <span class="text-slate-500">Projected Savings:</span> <strong class="text-emerald-500">$${gsu.projected_monthly_savings_usd.toLocaleString()}/mo</strong><br/>
+              <span class="text-slate-500">Break-Even:</span> <strong>${gsu.breakeven_tokens_millions}M tokens/mo</strong>
+            </div>
+          </div>
+          <pre class="p-3 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] overflow-x-auto">${JSON.stringify({ sovereignty: sov, finops: gsu }, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // Master 12-Gate Automated Evaluation Suite
+    // =========================================================================
+    async function runTwelveGateSuite() {
+      switchTab('evals');
+      document.getElementById('evalReportContainer').innerHTML = `
+        <div class="p-8 text-center text-xs text-slate-500 font-mono">
+          Executing automated 12-Gate Verification Suite across all 12 architectural pillars...
+        </div>
+      `;
+      const res = await fetch('/api/v1/evals/twelve-gate/run', { method: 'POST' });
+      const report = await res.json();
+      const gateCards = Object.entries(report.gates).map(([k, v], idx) => `
+        <div class="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-blue-500">Gate ${idx + 1}</span>
+            <span class="text-xs font-semibold ${v.passed ? 'text-emerald-500' : 'text-rose-500'}">${v.passed ? '✓ PASSED' : '✖ FAILED'}</span>
+          </div>
+          <p class="text-[11px] font-mono text-slate-500 truncate">${k}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('evalReportContainer').innerHTML = `
+        <div class="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono text-slate-500">Automated SDD Regression Evaluation Suite</span>
+              <h2 class="text-lg font-bold">12-Gate Enterprise Verification: ${report.suite_status}</h2>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold ${report.all_gates_passed ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-500 border border-rose-500/30'}">
+              ${report.all_gates_passed ? '✓ 12/12 GATES PASSED (100%)' : '✖ EVALUATION FAILED'}
+            </span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">${gateCards}</div>
+        </div>
+      `;
+    }
+
     // Initialize Default Views
     window.addEventListener('DOMContentLoaded', () => {
       executePillar1Workflow();
@@ -1090,6 +1405,9 @@
       executeP6Query();
       updateP7Form();
       executeP8A2ANormal();
+      loadP9Prompts();
+      runP10EuAiAct('Enterprise financial disbursement');
+      executeP12SovereigntyAndFinOps();
     });
   </script>
 </body>

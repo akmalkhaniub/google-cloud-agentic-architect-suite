@@ -428,3 +428,145 @@ class EightGateEvalReport(BaseModel):
     all_gates_passed: bool
     gates: dict[str, Any]
     generated_at: str = Field(default_factory=utc_now_iso)
+
+
+# ============================================================================
+# 12. Vertex AI Prompt Registry, Canary Routing & Drift (INV-13, REQ-GCP-PROMPT-01)
+# ============================================================================
+
+class PromptVersionRecord(BaseModel):
+    """Immutable versioned prompt template with SHA-256 checksum pinning."""
+    prompt_id: str
+    version: str
+    template_text: str
+    sha256_checksum: str
+    status: Literal["CHAMPION", "CANARY", "ARCHIVED", "ROLLED_BACK"]
+    traffic_weight: float = Field(..., ge=0.0, le=1.0)
+    created_at: str = Field(default_factory=utc_now_iso)
+
+
+class CanaryRoutingDecision(BaseModel):
+    """Deterministic traffic routing decision between Champion and Canary prompts."""
+    request_id: str
+    prompt_id: str
+    selected_version: str
+    variant: Literal["CHAMPION", "CANARY"]
+    sha256_checksum: str
+    shadow_comparison_enabled: bool = True
+
+
+class DriftEvaluationReport(BaseModel):
+    """Population Stability Index (PSI) & semantic cosine drift assessment."""
+    prompt_id: str
+    psi_score: float = Field(..., ge=0.0)
+    cosine_shift: float = Field(..., ge=0.0, le=1.0)
+    drift_detected: bool
+    auto_rollback_triggered: bool
+    active_champion_version: str
+    evaluated_at: str = Field(default_factory=utc_now_iso)
+
+
+# ============================================================================
+# 13. EU AI Act, GDPR Right-to-Erasure & C2PA Provenance (INV-14, REQ-GCP-GOV-01)
+# ============================================================================
+
+class EuAiActRiskTier(str, Enum):
+    """Official EU AI Act risk classification tiers."""
+    MINIMAL_RISK = "MINIMAL_RISK"
+    LIMITED_RISK = "LIMITED_RISK"
+    HIGH_RISK = "HIGH_RISK"
+    PROHIBITED = "PROHIBITED"
+
+
+class EuAiActAssessment(BaseModel):
+    """Automated EU AI Act compliance classification and control checklist."""
+    system_name: str
+    use_case_domain: str
+    risk_tier: EuAiActRiskTier
+    mandatory_controls: list[str]
+    human_oversight_required: bool
+    compliant: bool
+    assessed_at: str = Field(default_factory=utc_now_iso)
+
+
+class GdprErasureCertificate(BaseModel):
+    """Cryptographic audit certificate proving GDPR Article 17 Right-to-Erasure."""
+    certificate_id: str
+    subject_email_hash: str
+    tenant_id: str
+    stores_purged: list[str]
+    records_deleted_count: int
+    cryptographic_proof_hmac: str
+    erased_at: str = Field(default_factory=utc_now_iso)
+
+
+class C2paProvenanceManifest(BaseModel):
+    """C2PA cryptographic content provenance manifest for synthetic AI outputs."""
+    manifest_id: str
+    artifact_hash: str
+    generator_model: str
+    claim_generator: str = "google-cloud-agentic-architect-suite/2.0"
+    grounding_sources: list[str] = Field(default_factory=list)
+    hmac_signature: str
+    signed_at: str = Field(default_factory=utc_now_iso)
+
+
+# ============================================================================
+# 14. Real-Time SSE Streaming Agent Bus (INV-15, REQ-GCP-SSE-01)
+# ============================================================================
+
+class SseWorkflowEvent(BaseModel):
+    """Structured Server-Sent Event frame emitted during live workflow streaming."""
+    event_id: str
+    workflow_id: str
+    stage: str
+    message: str
+    status: Literal["IN_PROGRESS", "PASSED", "PAUSED", "BLOCKED", "COMPLETED"]
+    latency_ms: float = 0.0
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    timestamp: str = Field(default_factory=utc_now_iso)
+
+
+# ============================================================================
+# 15. Multi-Region Sovereignty & Vertex GSU FinOps (INV-16, REQ-GCP-FINOPS-GSU-01)
+# ============================================================================
+
+class SovereigntyRegion(str, Enum):
+    """Google Cloud sovereign processing regions."""
+    EU_WEST4 = "europe-west4"
+    US_CENTRAL1 = "us-central1"
+    ASIA_NORTHEAST1 = "asia-northeast1"
+
+
+class SovereigntyRoutingDecision(BaseModel):
+    """Residency-enforced Cloud Run & Vertex AI endpoint routing record."""
+    tenant_jurisdiction: str
+    selected_gcp_region: SovereigntyRegion
+    data_residency_enforced: bool = True
+    cross_border_egress_blocked: bool = True
+    compliance_frameworks: list[str]
+    endpoint_uri: str
+
+
+class GsuFinOpsCalculation(BaseModel):
+    """Vertex AI Provisioned Throughput (GSU) vs. Pay-As-You-Go FinOps economics."""
+    monthly_tokens_millions: float = Field(..., gt=0.0)
+    payg_monthly_cost_usd: float
+    gsu_recommended_units: int
+    gsu_monthly_cost_usd: float
+    recommended_tier: Literal["PAYG", "PROVISIONED_GSU"]
+    projected_monthly_savings_usd: float
+    gross_margin_protected: bool
+    breakeven_tokens_millions: float
+
+
+# ============================================================================
+# 16. Master 12-Gate Evaluation Report (REQ-GCP-EVAL-01)
+# ============================================================================
+
+class TwelveGateEvalReport(BaseModel):
+    """Master evaluation report produced by the full 12-Gate Enterprise Verification Suite."""
+    suite_status: Literal["PASSED", "FAILED"]
+    all_gates_passed: bool
+    gates: dict[str, Any]
+    generated_at: str = Field(default_factory=utc_now_iso)

@@ -108,6 +108,26 @@ sequenceDiagram
 - **Decision:** Implement **Google Agent-to-Agent (A2A)** protocol dispatch via **Cloud Run Eventarc** paired with a tri-state circuit breaker (`CLOSED` / `HALF_OPEN` / `OPEN`) and automatic model degradation (Gemini Pro $\rightarrow$ Gemini Flash).
 - **Consequences:** Prevents thundering herds, provides sub-second failover to high-throughput Flash models, and ensures fault isolation during upstream incidents.
 
+### ADR-09: SHA-256 Pinned Prompt Registry & PSI Drift Auto-Rollback vs. Hardcoded Inline Prompts
+- **Context:** Unversioned prompt edits in multi-agent production graphs cause silent regressions and behavioral drift that break downstream schemas.
+- **Decision:** Centralize system prompts in an immutable **Prompt Registry** pinned by SHA-256 checksums, roll out new versions via deterministic **Champion/Canary** splits, and monitor **Population Stability Index (PSI)** and semantic cosine shift to automatically roll back Canary traffic if thresholds breach (`PSI >= 0.25`).
+- **Consequences:** Guarantees reproducible reasoning behavior, safe progressive rollouts, and zero-downtime automated recovery from prompt regressions.
+
+### ADR-10: Automated EU AI Act Risk Tiering, GDPR Article 17 Erasure & C2PA Provenance
+- **Context:** Enterprise AI systems operating in EMEA and global regulated markets face strict legal mandates under the EU AI Act and GDPR Article 17 (Right-to-Erasure), plus synthetic content authenticity requirements.
+- **Decision:** Embed deterministic **EU AI Act risk classification**, a cascading **GDPR Right-to-Erasure orchestrator** spanning Memorystore, DLP vaults, and BigQuery traces with HMAC-signed deletion certificates, and **C2PA cryptographic provenance signing** on synthetic artifacts.
+- **Consequences:** Provides regulator-ready cryptographic audit proof for privacy erasure and verifiable content origin across every synthetic output.
+
+### ADR-11: Server-Sent Events (SSE) Streaming Bus vs. Polling REST APIs
+- **Context:** Multi-agent workflows spanning Model Armor, Cloud DLP, Dataplex RAG, and 5 specialized agents can take several seconds, degrading operator trust if the UI blocks without feedback.
+- **Decision:** Expose an asynchronous **SSE (`text/event-stream`) streaming bus** emitting structured lifecycle frames (`workload_identity_check`, `model_armor_screen`, `cloud_dlp_deidentify`, `agent_step_*`, `workflow_final`) with immediate short-circuit termination on guardrail blocks.
+- **Consequences:** Delivers real-time transparency into every security check and agent handoff with minimal server overhead on Cloud Run.
+
+### ADR-12: Multi-Region Sovereignty Routing & Vertex AI GSU FinOps Crossover Modeling
+- **Context:** Global enterprise SaaS deployments must prevent cross-border data egress (EU GDPR, US FedRAMP, Japan APPI) while protecting SaaS gross margins as token volume scales.
+- **Decision:** Enforce deterministic regional routing (`europe-west4`, `us-central1`, `asia-northeast1`) and embed a **Vertex AI Provisioned Throughput (GSU) vs. PAYG FinOps crossover engine** to determine exact break-even volume and protect SaaS gross margins ($\le 30\%$ AI COGS).
+- **Consequences:** Eliminates cross-border compliance violations and optimizes cloud inference unit economics before spend escalates.
+
 ---
 
 ## 3. STRIDE Threat Model & Google Cloud Security Controls
